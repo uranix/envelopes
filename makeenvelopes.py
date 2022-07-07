@@ -1,11 +1,18 @@
-#!/usr/bin/env python2.7
-# coding: utf-8
+#!/usr/bin/env python3
 
-import codecs
 import sqlite3 as lite
 import os
 
+
 con = lite.connect('spam.db')
+
+
+def check(command):
+    assert os.system(command) == 0, command
+
+
+check('pdftk --version')
+check('xelatex --version')
 
 
 with con:
@@ -13,7 +20,7 @@ with con:
     cur.execute('SELECT recepient,address,zip,copies,phony FROM recepients')
     rows = cur.fetchall()
     cnt = 0
-    log = codecs.open('spam.txt', 'w', encoding='utf-8')
+    log = open('spam.txt', 'w')
     os.system('rm Envelope-*.pdf')
     for row in rows:
         recp = row[0]
@@ -23,7 +30,7 @@ with con:
         log.write(u'%s (%d, %s) — %d экз.\n' % (recp, indx, addr, cops))
         if row[4] != 0:
             continue
-        with codecs.open('defs.tex', 'w', encoding='utf-8') as f:
+        with open('defs.tex', 'w') as f:
             f.write('\\newcommand{\\recpt}{%s}\n' % recp)
             f.write('\\newcommand{\\addr}{%s}\n' % addr)
             f.write('\\newcommand{\\idxaaa}{%s}\n' % str(indx)[0])
@@ -32,11 +39,10 @@ with con:
             f.write('\\newcommand{\\idxabb}{%s}\n' % str(indx)[3])
             f.write('\\newcommand{\\idxbaa}{%s}\n' % str(indx)[4])
             f.write('\\newcommand{\\idxbab}{%s}\n' % str(indx)[5])
-        os.system('xelatex Envelope')
-        os.system('mv Envelope.pdf Envelope-%d.pdf' % cnt)
+        check('xelatex -interaction=nonstopmode Envelope')
+        check('mv Envelope.pdf Envelope-%d.pdf' % cnt)
 
-        cnt = cnt + 1
+        cnt += 1
 
-    os.system('pdfjoin --paper c5paper --rotateoversize false Envelope-*.pdf --outfile Envelopes.pdf')
+    check('pdftk Envelope-*.pdf cat output Envelopes.pdf')
     log.close()
-
