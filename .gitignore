@@ -1,4 +1,7 @@
 *.log
 *.aux
-*.pdf
+Envelope-*.pdf
 defs.tex
+*.db
+*.sql
+*.txt
